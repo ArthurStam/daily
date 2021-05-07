@@ -1,0 +1,11 @@
+.Balance--good {
+  color: var(--dynamic_green);
+}
+
+.Balance--normal {
+  color: var(--dynamic_orange);
+}
+
+.Balance--danger {
+  color: var(--dynamic_red);
+}

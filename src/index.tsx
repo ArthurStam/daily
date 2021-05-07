@@ -28,26 +28,31 @@ import { Wizard } from './Screens/Wizard/Wizard';
 import { Icon28SettingsOutline } from '@vkontakte/icons';
 import { Settings } from './Screens/Settings/Settings';
 import vkBridge from '@vkontakte/vk-bridge';
+import { ActionInterface, AppState } from './types';
+import { classNames } from '@vkontakte/vkjs';
+import './index.css';
 
 vkBridge.send('VKWebAppInit');
 
-function reducer(state, action) {
-  let newState = { };
+type AppReducer = (state: AppState, action: ActionInterface) => AppState;
+
+const reducer: AppReducer = (state: AppState, action: ActionInterface) => {
+  let newState: AppState = { ...state, updatedAt: (new Date()).toISOString() };
   switch (action.type) {
     case 'setActivePanel':
-      newState = { ...state, activePanel: action.activePanel };
+      newState.activePanel = action.activePanel;
       break;
     case 'setActiveModal':
-      newState = { ...state, activeModal: action.activeModal };
+      newState.activeModal = action.activeModal;
       break;
     case 'setDailyLimit':
-      newState = { ...state, dailyLimit: Number(action.dailyLimit) };
+      newState.dailyLimit = Number(action.dailyLimit);
       break;
     case 'addSpend':
-      newState = { ...state, spends: [action.spend, ...state.spends] };
+      newState.spends = [action.spend, ...newState.spends];
       break;
     case 'removeSpendByIndex':
-      newState = { ...state, spends: [...state.spends.slice(0, action.index), ...state.spends.slice(action.index + 1)] };
+      newState.spends = [...newState.spends.slice(0, action.index), ...newState.spends.slice(action.index + 1)];
       break;
     default:
       throw new Error();
@@ -56,7 +61,8 @@ function reducer(state, action) {
   return newState;
 }
 
-let initialState = {
+let initialState: AppState = {
+  updatedAt: (new Date()).toISOString(),
   dailyLimit: null,
   activePanel: 'wizard',
   activeModal: null,
@@ -64,7 +70,7 @@ let initialState = {
 };
 
 try {
-  const persistedState = JSON.parse(localStorage.getItem('daily:data'))
+  const persistedState = JSON.parse(localStorage.getItem('daily:data')) as AppState;
   if (persistedState) {
     initialState = persistedState;
   }
@@ -73,9 +79,20 @@ try {
 }
 
 const App = () => {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer<AppReducer>(reducer, initialState);
   const [inputValue, setInputValue] = useState('');
   const [editing, setEditing] = useState(false);
+
+  const dailySpends = state.spends.reduce((acc, item) => { acc += item.value; return acc; }, 0);
+  const balance = state.dailyLimit - dailySpends;
+
+  let balanceLevel = 'good';
+
+  if (balance < state.dailyLimit / 2 && balanceLevel >= state.dailyLimit / 3) {
+    balanceLevel = 'normal';
+  } else if (balance < state.dailyLimit / 3) {
+    balanceLevel = 'danger';
+  }
 
   const { viewWidth } = useAdaptivity();
   return (
@@ -91,8 +108,8 @@ const App = () => {
             />
           </ModalRoot>
         }>
-          <Wizard id="wizard" onSubmit={(value) => {
-            dispatch({ type: 'setDailyLimit', dailyLimit: value });
+          <Wizard id="wizard" onSubmit={(dailyLimit) => {
+            dispatch({ type: 'setDailyLimit', dailyLimit });
             dispatch({ type: 'setActivePanel', activePanel: 'main' });
           }} />
           <Panel id="main">
@@ -106,10 +123,15 @@ const App = () => {
               Daily
             </PanelHeader>
             <Group>
-              <Header mode="secondary">Лимит</Header>
-              <SimpleCell>
-                <Title Component="div" weight="regular" level="1">
-                  {(state.dailyLimit - state.spends.reduce((acc, item) => { acc += item.value; return acc; }, 0)).toLocaleString()} ₽
+              <Header mode="secondary">Остаток</Header>
+              <SimpleCell disabled>
+                <Title
+                  Component="div"
+                  weight="regular"
+                  level="1"
+                  className={classNames('Balance', `Balance--${balanceLevel}`)}
+                >
+                  {balance.toLocaleString()} ₽
                 </Title>
               </SimpleCell>
             </Group>
@@ -141,10 +163,9 @@ const App = () => {
               {state.spends.map((item) => (
                 <Cell
                   removable={editing}
-                  key={item.date}
+                  key={item.date.toString()}
                   data-id={item.date.toString()}
                   onRemove={() => {
-                    const removeIndex = state.spends.findIndex(i => i === item);
                     dispatch({ type: 'removeSpendByIndex', index: state.spends.findIndex(i => i === item) });
                   }}
                 >

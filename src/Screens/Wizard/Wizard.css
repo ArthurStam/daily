@@ -1,6 +1,13 @@
 .Wizard {
+  width: 100%;
+}
+
+.Wizard--ios {
   height: calc(100vh - var(--safe-area-inset-top) - var(--safe-area-inset-bottom) - var(--panelheader_height_ios) - 5px);
-  max-width: 100%;
+}
+
+.Wizard--android {
+  height: calc(100vh - var(--safe-area-inset-top) - var(--safe-area-inset-bottom) - var(--panelheader_height_android) - 5px);
 }
 
 .Wizard__limit {
