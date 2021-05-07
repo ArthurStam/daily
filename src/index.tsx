@@ -24,13 +24,14 @@ import {
 } from '@vkontakte/vkui';
 import '@vkontakte/vkui/dist/vkui.css';
 import { Wizard } from './Components/Wizard/Wizard';
-import { Icon28SettingsOutline } from '@vkontakte/icons';
+import { Icon28HelpCircleOutline, Icon28SettingsOutline } from '@vkontakte/icons';
 import { Settings } from './Components/Settings/Settings';
 import vkBridge from '@vkontakte/vk-bridge';
 import { ActionInterface, AppState } from './types';
 import { classNames } from '@vkontakte/vkjs';
 import './index.css';
 import { CurrencyInput } from './Components/CurrencyInput/CurrencyInput';
+import { Help } from './Components/Help/Help';
 
 vkBridge.send('VKWebAppInit');
 
@@ -107,6 +108,7 @@ const App = () => {
               state={state}
               onClose={() => setActiveModal(null)}
             />
+            <Help id="help" onClose={() => setActiveModal(null)} />
           </ModalRoot>
         }>
           <Wizard id="wizard" onSubmit={(dailyLimit) => {
@@ -117,9 +119,14 @@ const App = () => {
           <Panel id="main">
             <PanelHeader
               left={
-                <PanelHeaderButton onClick={() => setActiveModal('settings')}>
-                  <Icon28SettingsOutline />
-                </PanelHeaderButton>
+                <React.Fragment>
+                  <PanelHeaderButton onClick={() => setActiveModal('settings')}>
+                    <Icon28SettingsOutline />
+                  </PanelHeaderButton>
+                  <PanelHeaderButton onClick={() => setActiveModal('help')}>
+                    <Icon28HelpCircleOutline />
+                  </PanelHeaderButton>
+                </React.Fragment>
               }
             >
               Daily
