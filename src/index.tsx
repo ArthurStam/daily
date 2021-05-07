@@ -115,6 +115,7 @@ const App = () => {
             dispatch({ type: 'setDailyLimit', dailyLimit });
             dispatch({ type: 'wizardPassed' });
             setActivePanel('main');
+            ym(77962162,'reachGoal','pass wizard')
           }} />
           <Panel id="main">
             <PanelHeader
@@ -160,6 +161,7 @@ const App = () => {
                 e.preventDefault();
                 setInputValue('');
                 dispatch({ type: 'addSpend', spend: { date: (new Date()).toISOString(), value: Number(inputValue) } });
+                ym(77962162,'reachGoal','add spend');
               }}>
                 <CurrencyInput
                   placeholder="Добавить трату, ₽"
