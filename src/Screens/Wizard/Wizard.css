@@ -1,0 +1,8 @@
+.Wizard {
+  height: calc(100vh - var(--safe-area-inset-top) - var(--safe-area-inset-bottom) - var(--panelheader_height_ios) - 5px);
+  max-width: 100%;
+}
+
+.Wizard__limit {
+  text-align: left;
+}
