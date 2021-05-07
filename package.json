@@ -15,6 +15,7 @@
     "react-dom": "16.14.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.14.0",
     "@babel/preset-env": "^7.14.1",
     "@babel/preset-react": "^7.13.13",
     "@babel/preset-typescript": "^7.13.0",
@@ -31,6 +32,6 @@
   "scripts": {
     "build": "NODE_ENV=production webpack build",
     "start": "NODE_ENV=development webpack serve",
-    "deploy": "gh-pages -d dist"
+    "deploy": "yarn build && gh-pages -d dist"
   }
 }
