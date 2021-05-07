@@ -1,15 +1,13 @@
 export interface AppState {
-  updatedAt: string;
   dailyLimit: number;
-  activePanel: string;
-  activeModal: string;
+  isWizardPassed: boolean;
   spends: Array<{
-    date: Date;
+    date: string;
     value: number;
-  }>
+  }>,
 }
 
-export type ActionTypes = 'setActivePanel' | 'setActiveModal' | 'setDailyLimit' | 'addSpend' | 'removeSpendByIndex';
+export type ActionTypes = 'wizardPassed' | 'setDailyLimit' | 'addSpend' | 'removeSpendByIndex';
 
 export interface ActionInterface {
   type: ActionTypes;

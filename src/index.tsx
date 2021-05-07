@@ -16,7 +16,6 @@ import {
   useAdaptivity,
   View,
   ViewWidth,
-  Input,
   Footer,
   Cell,
   PanelHeaderButton,
@@ -24,26 +23,24 @@ import {
   Title,
 } from '@vkontakte/vkui';
 import '@vkontakte/vkui/dist/vkui.css';
-import { Wizard } from './Screens/Wizard/Wizard';
+import { Wizard } from './Components/Wizard/Wizard';
 import { Icon28SettingsOutline } from '@vkontakte/icons';
-import { Settings } from './Screens/Settings/Settings';
+import { Settings } from './Components/Settings/Settings';
 import vkBridge from '@vkontakte/vk-bridge';
 import { ActionInterface, AppState } from './types';
 import { classNames } from '@vkontakte/vkjs';
 import './index.css';
+import { CurrencyInput } from './Components/CurrencyInput/CurrencyInput';
 
 vkBridge.send('VKWebAppInit');
 
 type AppReducer = (state: AppState, action: ActionInterface) => AppState;
 
 const reducer: AppReducer = (state: AppState, action: ActionInterface) => {
-  let newState: AppState = { ...state, updatedAt: (new Date()).toISOString() };
+  let newState: AppState = { ...state };
   switch (action.type) {
-    case 'setActivePanel':
-      newState.activePanel = action.activePanel;
-      break;
-    case 'setActiveModal':
-      newState.activeModal = action.activeModal;
+    case 'wizardPassed':
+      newState.isWizardPassed = true;
       break;
     case 'setDailyLimit':
       newState.dailyLimit = Number(action.dailyLimit);
@@ -57,22 +54,26 @@ const reducer: AppReducer = (state: AppState, action: ActionInterface) => {
     default:
       throw new Error();
   }
+  localStorage.setItem('daily:updatedAt', new Date().toISOString());
   localStorage.setItem('daily:data', JSON.stringify(newState));
   return newState;
 }
 
 let initialState: AppState = {
-  updatedAt: (new Date()).toISOString(),
   dailyLimit: null,
-  activePanel: 'wizard',
-  activeModal: null,
   spends: [],
+  isWizardPassed: false,
 };
 
 try {
   const persistedState = JSON.parse(localStorage.getItem('daily:data')) as AppState;
+  let updatedAt = localStorage.getItem('daily:updatedAt');
   if (persistedState) {
     initialState = persistedState;
+
+    if (updatedAt && new Date(updatedAt).getDate() !== new Date().getDate()) {
+      initialState.spends = [];
+    }
   }
 } catch (e) {
 
@@ -82,12 +83,12 @@ const App = () => {
   const [state, dispatch] = useReducer<AppReducer>(reducer, initialState);
   const [inputValue, setInputValue] = useState('');
   const [editing, setEditing] = useState(false);
+  const [activePanel, setActivePanel] = useState(state.isWizardPassed ? 'main' : 'wizard')
+  const [activeModal, setActiveModal] = useState(null);
 
   const dailySpends = state.spends.reduce((acc, item) => { acc += item.value; return acc; }, 0);
   const balance = state.dailyLimit - dailySpends;
-
   let balanceLevel = 'good';
-
   if (balance < state.dailyLimit / 2 && balance >= state.dailyLimit / 3) {
     balanceLevel = 'normal';
   } else if (balance < state.dailyLimit / 3) {
@@ -98,24 +99,25 @@ const App = () => {
   return (
     <SplitLayout header={viewWidth > ViewWidth.MOBILE && <PanelHeader />}>
       <SplitCol spaced={viewWidth > ViewWidth.MOBILE}>
-        <View activePanel={state.activePanel} modal={
-          <ModalRoot activeModal={state.activeModal}>
+        <View activePanel={activePanel} modal={
+          <ModalRoot activeModal={activeModal}>
             <Settings
               id="settings"
               dispatch={dispatch}
               state={state}
-              onClose={() => dispatch({ type: 'setActiveModal', activeModal: null })}
+              onClose={() => setActiveModal(null)}
             />
           </ModalRoot>
         }>
           <Wizard id="wizard" onSubmit={(dailyLimit) => {
             dispatch({ type: 'setDailyLimit', dailyLimit });
-            dispatch({ type: 'setActivePanel', activePanel: 'main' });
+            dispatch({ type: 'wizardPassed' });
+            setActivePanel('main');
           }} />
           <Panel id="main">
             <PanelHeader
               left={
-                <PanelHeaderButton onClick={() => dispatch({ type: 'setActiveModal', activeModal: 'settings' })}>
+                <PanelHeaderButton onClick={() => setActiveModal('settings')}>
                   <Icon28SettingsOutline />
                 </PanelHeaderButton>
               }
@@ -150,10 +152,9 @@ const App = () => {
               <FormItem Component="form" onSubmit={(e) => {
                 e.preventDefault();
                 setInputValue('');
-                dispatch({ type: 'addSpend', spend: { date: new Date(), value: Number(inputValue) } });
+                dispatch({ type: 'addSpend', spend: { date: (new Date()).toISOString(), value: Number(inputValue) } });
               }}>
-                <Input
-                  type="number"
+                <CurrencyInput
                   placeholder="Добавить трату, ₽"
                   onChange={(e) => setInputValue(e.target.value)}
                   value={inputValue}
@@ -162,14 +163,16 @@ const App = () => {
               {state.spends.length === 0 && <Footer>Сегодня ещё не было трат</Footer>}
               {state.spends.map((item) => (
                 <Cell
+                  disabled
                   removable={editing}
                   key={item.date.toString()}
                   data-id={item.date.toString()}
                   onRemove={() => {
                     dispatch({ type: 'removeSpendByIndex', index: state.spends.findIndex(i => i === item) });
                   }}
+                  description={`${new Date(item.date).getHours()}:${new Date(item.date).getMinutes()}`}
                 >
-                  - {item.value.toLocaleString()} ₽
+                  {item.value.toLocaleString()} ₽
                 </Cell>
               ))}
             </Group>

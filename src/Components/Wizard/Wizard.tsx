@@ -4,7 +4,6 @@ import {
   FormItem,
   Gallery,
   getClassName,
-  Input,
   Panel,
   PanelHeader,
   Placeholder,
@@ -13,6 +12,7 @@ import {
 import { Icon36CoinsStackHighOutline, Icon36CoinsStacks3Outline, Icon36DiamondOutline } from '@vkontakte/icons';
 import './Wizard.css';
 import { validateDailyLimit } from '../../utils';
+import { CurrencyInput } from '../CurrencyInput/CurrencyInput';
 
 interface WizardProps {
   id: string;
@@ -66,8 +66,7 @@ export const Wizard: FC<WizardProps> = ({ id, onSubmit }) => {
               }
             }}
           >
-            <Input
-              type="number"
+            <CurrencyInput
               placeholder="650 ₽"
               onChange={(e) => setDailyLimit(e.target.value)}
               value={dailyLimit}
