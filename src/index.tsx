@@ -88,7 +88,7 @@ const App = () => {
 
   let balanceLevel = 'good';
 
-  if (balance < state.dailyLimit / 2 && balanceLevel >= state.dailyLimit / 3) {
+  if (balance < state.dailyLimit / 2 && balance >= state.dailyLimit / 3) {
     balanceLevel = 'normal';
   } else if (balance < state.dailyLimit / 3) {
     balanceLevel = 'danger';
