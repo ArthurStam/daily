@@ -1,4 +1,4 @@
-import React, { useReducer, useState } from 'react';
+import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import ReactDOM from 'react-dom';
 import {
   AdaptivityProvider,
@@ -20,13 +20,13 @@ import {
   Cell,
   PanelHeaderButton,
   ModalRoot,
-  Title,
+  Title, Scheme,
 } from '@vkontakte/vkui';
 import '@vkontakte/vkui/dist/vkui.css';
 import { Wizard } from './Components/Wizard/Wizard';
 import { Icon28HelpCircleOutline, Icon28SettingsOutline } from '@vkontakte/icons';
 import { Settings } from './Components/Settings/Settings';
-import vkBridge from '@vkontakte/vk-bridge';
+import vkBridge, { VKBridgeSubscribeHandler } from '@vkontakte/vk-bridge';
 import { ActionInterface, AppState } from './types';
 import { classNames } from '@vkontakte/vkjs';
 import './index.css';
@@ -192,12 +192,34 @@ const App = () => {
   )
 }
 
+const AppWrapper = () => {
+  const [scheme, setScheme]: [Scheme, any] = useState(Scheme.BRIGHT_LIGHT);
+  const connectListener: VKBridgeSubscribeHandler = useCallback((e) => {
+    switch (e.detail.type) {
+      case 'VKWebAppUpdateConfig':
+        setScheme(e.detail.data.scheme);
+    }
+  }, []);
+
+  useEffect(() => {
+    vkBridge.subscribe(connectListener);
+    vkBridge.send('VKWebAppInit');
+    return () => {
+      vkBridge.unsubscribe(connectListener);
+    };
+  });
+
+  return (
+    <ConfigProvider scheme={scheme}>
+      <AdaptivityProvider>
+        <AppRoot>
+          <App />
+        </AppRoot>
+      </AdaptivityProvider>
+    </ConfigProvider>
+  );
+};
+
 ReactDOM.render(
-  <ConfigProvider>
-    <AdaptivityProvider>
-      <AppRoot>
-        <App />
-      </AppRoot>
-    </AdaptivityProvider>
-  </ConfigProvider>, document.getElementById('root')
+  <AppWrapper/>, document.getElementById('root')
 )
